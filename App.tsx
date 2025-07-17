@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { StyleSheet, View, Text, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AudioManager, AudioRecording, AudioSound } from "./utils/audioUtils";
-import { TempoLight, ControlButtons, BPMInput } from "./components";
+import { TempoLight, ControlButtons, BPMInput, CountdownOverlay } from "./components";
 
 export default function App() {
   const [bpm, setBpm] = useState("120");
@@ -10,6 +10,7 @@ export default function App() {
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [sound, setSound] = useState<AudioSound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showCountdown, setShowCountdown] = useState(false);
   const recordingRef = useRef<AudioRecording | null>(null);
 
   const beats = 4; // Fixed for now
@@ -30,16 +31,30 @@ export default function App() {
 
       await AudioManager.setAudioMode();
 
+      // Start countdown
+      setShowCountdown(true);
+    } catch (error) {
+      console.error("Recording setup failed:", error);
+    }
+  };
+
+  const onCountdownComplete = async () => {
+    try {
+      const numericBpm = parseInt(bpm);
+      
+      // Start actual recording after countdown
       const recording = await AudioManager.createRecording();
       await recording.startAsync();
       recordingRef.current = recording;
       setIsRecording(true);
+      setShowCountdown(false);
 
       // Stop after x beats
       const durationMs = (60 / numericBpm) * beats * 1000;
       setTimeout(() => stopRecording(), durationMs);
     } catch (error) {
       console.error("Recording failed:", error);
+      setShowCountdown(false);
     }
   };
 
@@ -107,6 +122,13 @@ export default function App() {
         onStartRecording={startRecording}
         onStartLoop={startLoop}
         onStopLoop={stopLoop}
+        isCountingDown={showCountdown}
+      />
+
+      <CountdownOverlay
+        isVisible={showCountdown}
+        bpm={parseInt(bpm) || 120}
+        onCountdownComplete={onCountdownComplete}
       />
 
       <StatusBar style="auto" />

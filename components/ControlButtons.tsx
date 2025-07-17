@@ -8,6 +8,7 @@ interface ControlButtonsProps {
   onStartRecording: () => void;
   onStartLoop: () => void;
   onStopLoop: () => void;
+  isCountingDown?: boolean;
 }
 
 export const ControlButtons: React.FC<ControlButtonsProps> = ({
@@ -17,6 +18,7 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
   onStartRecording,
   onStartLoop,
   onStopLoop,
+  isCountingDown = false,
 }) => {
   return (
     <View style={styles.container}>
@@ -24,13 +26,13 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
         style={[
           styles.button,
           styles.recordButton,
-          isRecording && styles.recordingButton,
+          (isRecording || isCountingDown) && styles.recordingButton,
         ]}
         onPress={onStartRecording}
-        disabled={isRecording}
+        disabled={isRecording || isCountingDown}
       >
-        <Text style={[styles.buttonText, isRecording && styles.recordingText]}>
-          {isRecording ? "🔴 Recording..." : "🎤 Record 4-beat loop"}
+        <Text style={[styles.buttonText, (isRecording || isCountingDown) && styles.recordingText]}>
+          {isCountingDown ? "⏳ Get Ready..." : isRecording ? "🔴 Recording..." : "🎤 Record 4-beat loop"}
         </Text>
       </TouchableOpacity>
 
