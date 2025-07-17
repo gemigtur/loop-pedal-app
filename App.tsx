@@ -1,13 +1,15 @@
 import React, { useState, useRef } from "react";
-import { StyleSheet, View, Text, Button, TextInput, Alert } from "react-native";
+import { StyleSheet, View, Text, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AudioManager, AudioRecording, AudioSound } from "./utils/audioUtils";
+import { TempoLight, ControlButtons, BPMInput } from "./components";
 
 export default function App() {
   const [bpm, setBpm] = useState("120");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [sound, setSound] = useState<AudioSound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const recordingRef = useRef<AudioRecording | null>(null);
 
   const beats = 4; // Fixed for now
@@ -64,6 +66,7 @@ export default function App() {
     try {
       const newSound = await AudioManager.createSound(recordingUri, true);
       setSound(newSound);
+      setIsPlaying(true);
       await newSound.playAsync();
     } catch (error) {
       console.error("Playback error:", error);
@@ -75,31 +78,36 @@ export default function App() {
       await sound.stopAsync();
       await sound.unloadAsync();
       setSound(null);
+      setIsPlaying(false);
     }
+  };
+
+  const getTempoLightMode = () => {
+    if (isRecording) return 'recording';
+    if (isPlaying) return 'playing';
+    return 'idle';
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>🎵 Loop Pedal Starter</Text>
+      <Text style={styles.header}>🎵 Loop Pedal</Text>
 
-      <TextInput
-        style={styles.input}
-        value={bpm}
-        onChangeText={setBpm}
-        keyboardType="numeric"
-        placeholder="Enter BPM"
+      <TempoLight
+        bpm={parseInt(bpm) || 120}
+        isActive={isRecording || isPlaying}
+        mode={getTempoLightMode()}
       />
 
-      <Button
-        title={isRecording ? "Recording..." : "Record 4-beat loop"}
-        onPress={startRecording}
-        disabled={isRecording}
+      <BPMInput bpm={bpm} onBpmChange={setBpm} />
+
+      <ControlButtons
+        isRecording={isRecording}
+        hasRecording={!!recordingUri}
+        isPlaying={isPlaying}
+        onStartRecording={startRecording}
+        onStartLoop={startLoop}
+        onStopLoop={stopLoop}
       />
-
-      <View style={styles.spacer} />
-
-      <Button title="Play Loop" onPress={startLoop} disabled={!recordingUri} />
-      <Button title="Stop Loop" onPress={stopLoop} disabled={!sound} />
 
       <StatusBar style="auto" />
     </View>
@@ -118,15 +126,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 24,
     marginBottom: 20,
-  },
-  input: {
-    backgroundColor: "#fff",
-    padding: 12,
-    width: "100%",
-    marginBottom: 20,
-    borderRadius: 6,
-  },
-  spacer: {
-    height: 20,
   },
 });
