@@ -2,18 +2,17 @@ import React, { useState, useRef } from "react";
 import { StyleSheet, View, Text, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AudioManager, AudioRecording, AudioSound } from "./utils/audioUtils";
-import { TempoLight, ControlButtons, BPMInput, CountdownOverlay } from "./components";
+import { TempoLight, ControlButtons, BPMInput, CountdownOverlay, BeatsSelector } from "./components";
 
 export default function App() {
   const [bpm, setBpm] = useState("120");
+  const [beats, setBeats] = useState(4);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [sound, setSound] = useState<AudioSound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const recordingRef = useRef<AudioRecording | null>(null);
-
-  const beats = 4; // Fixed for now
 
   const startRecording = async () => {
     try {
@@ -115,6 +114,8 @@ export default function App() {
 
       <BPMInput bpm={bpm} onBpmChange={setBpm} />
 
+      <BeatsSelector beats={beats} onBeatsChange={setBeats} />
+
       <ControlButtons
         isRecording={isRecording}
         hasRecording={!!recordingUri}
@@ -123,6 +124,7 @@ export default function App() {
         onStartLoop={startLoop}
         onStopLoop={stopLoop}
         isCountingDown={showCountdown}
+        beats={beats}
       />
 
       <CountdownOverlay
