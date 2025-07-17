@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { StyleSheet, View, Text, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AudioManager, AudioRecording, AudioSound } from "./utils/audioUtils";
-import { TempoLight, ControlButtons, BPMInput, CountdownOverlay, BeatsSelector } from "./components";
+import { TempoLight, ControlButtons, BPMInput, CountdownOverlay, BeatsSelector, BigRecordButton } from "./components";
 
 export default function App() {
   const [bpm, setBpm] = useState("120");
@@ -13,6 +13,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const recordingRef = useRef<AudioRecording | null>(null);
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const startRecording = async () => {
     try {
@@ -50,7 +51,7 @@ export default function App() {
 
       // Stop after x beats
       const durationMs = (60 / numericBpm) * beats * 1000;
-      setTimeout(() => stopRecording(), durationMs);
+      recordingTimeoutRef.current = setTimeout(() => stopRecording(), durationMs);
     } catch (error) {
       console.error("Recording failed:", error);
       setShowCountdown(false);
@@ -63,6 +64,12 @@ export default function App() {
       const recording = recordingRef.current;
       if (!recording) return;
 
+      // Clear the timeout if it exists
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
+
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       setRecordingUri(uri);
@@ -71,6 +78,28 @@ export default function App() {
       console.log("Recorded URI:", uri);
     } catch (error) {
       console.error("Stop recording failed:", error);
+    }
+  };
+
+  const cancelRecording = async () => {
+    setIsRecording(false);
+    try {
+      const recording = recordingRef.current;
+      if (!recording) return;
+
+      // Clear the timeout
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
+
+      await recording.stopAndUnloadAsync();
+      recordingRef.current = null;
+      
+      // Don't set recordingUri - this discards the recording
+      console.log("Recording cancelled");
+    } catch (error) {
+      console.error("Cancel recording failed:", error);
     }
   };
 
@@ -104,28 +133,41 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>🎵 Loop Pedal</Text>
+      <View style={styles.topContent}>
+        <Text style={styles.header}>🎵 Loop Pedal</Text>
 
-      <TempoLight
-        bpm={parseInt(bpm) || 120}
-        isActive={isRecording || isPlaying}
-        mode={getTempoLightMode()}
-      />
+        <TempoLight
+          bpm={parseInt(bpm) || 120}
+          isActive={isRecording || isPlaying}
+          mode={getTempoLightMode()}
+        />
 
-      <BPMInput bpm={bpm} onBpmChange={setBpm} />
+        <BPMInput bpm={bpm} onBpmChange={setBpm} />
 
-      <BeatsSelector beats={beats} onBeatsChange={setBeats} />
+        <BeatsSelector beats={beats} onBeatsChange={setBeats} />
 
-      <ControlButtons
-        isRecording={isRecording}
-        hasRecording={!!recordingUri}
-        isPlaying={isPlaying}
-        onStartRecording={startRecording}
-        onStartLoop={startLoop}
-        onStopLoop={stopLoop}
-        isCountingDown={showCountdown}
-        beats={beats}
-      />
+        <ControlButtons
+          isRecording={isRecording}
+          hasRecording={!!recordingUri}
+          isPlaying={isPlaying}
+          onStartRecording={startRecording}
+          onStartLoop={startLoop}
+          onStopLoop={stopLoop}
+          onCancelRecording={cancelRecording}
+          isCountingDown={showCountdown}
+          beats={beats}
+        />
+      </View>
+
+      <View style={styles.bottomButton}>
+        <BigRecordButton
+          isRecording={isRecording}
+          isCountingDown={showCountdown}
+          beats={beats}
+          onStartRecording={startRecording}
+          onCancelRecording={cancelRecording}
+        />
+      </View>
 
       <CountdownOverlay
         isVisible={showCountdown}
@@ -142,13 +184,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#1c1c1c",
+  },
+  topContent: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
+    paddingBottom: 120, // Space for the bottom button
   },
   header: {
     color: "#fff",
     fontSize: 24,
     marginBottom: 20,
+  },
+  bottomButton: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    paddingTop: 20,
+    backgroundColor: 'rgba(28, 28, 28, 0.95)',
+    alignItems: 'center',
   },
 });

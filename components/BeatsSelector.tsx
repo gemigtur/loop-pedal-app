@@ -6,7 +6,7 @@ interface BeatsSelectorProps {
   onBeatsChange: (beats: number) => void;
 }
 
-const BEAT_OPTIONS = [1, 2, 4, 8, 16];
+const BEAT_OPTIONS = [4, 8, 16, 32, 64];
 
 export const BeatsSelector: React.FC<BeatsSelectorProps> = ({ beats, onBeatsChange }) => {
   return (

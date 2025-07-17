@@ -8,6 +8,7 @@ interface ControlButtonsProps {
   onStartRecording: () => void;
   onStartLoop: () => void;
   onStopLoop: () => void;
+  onCancelRecording?: () => void;
   isCountingDown?: boolean;
   beats?: number;
 }
@@ -19,36 +20,23 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
   onStartRecording,
   onStartLoop,
   onStopLoop,
+  onCancelRecording,
   isCountingDown = false,
   beats = 4,
 }) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[
-          styles.button,
-          styles.recordButton,
-          (isRecording || isCountingDown) && styles.recordingButton,
-        ]}
-        onPress={onStartRecording}
-        disabled={isRecording || isCountingDown}
-      >
-        <Text style={[styles.buttonText, (isRecording || isCountingDown) && styles.recordingText]}>
-          {isCountingDown ? "⏳ Get Ready..." : isRecording ? "🔴 Recording..." : `🎤 Record ${beats}-beat loop`}
-        </Text>
-      </TouchableOpacity>
-
       <View style={styles.playbackControls}>
         <TouchableOpacity
           style={[
             styles.button,
             styles.playButton,
-            !hasRecording && styles.disabledButton,
+            (!hasRecording || isRecording) && styles.disabledButton,
           ]}
           onPress={onStartLoop}
-          disabled={!hasRecording || isPlaying}
+          disabled={!hasRecording || isPlaying || isRecording}
         >
-          <Text style={[styles.buttonText, !hasRecording && styles.disabledText]}>
+          <Text style={[styles.buttonText, (!hasRecording || isRecording) && styles.disabledText]}>
             ▶️ Play Loop
           </Text>
         </TouchableOpacity>
@@ -90,12 +78,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 50,
   },
-  recordButton: {
-    backgroundColor: '#4a4a4a',
-  },
-  recordingButton: {
-    backgroundColor: '#ff4444',
-  },
   playButton: {
     backgroundColor: '#2d5a2d',
     flex: 1,
@@ -112,9 +94,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  recordingText: {
-    color: '#ffffff',
   },
   disabledText: {
     color: '#666666',
