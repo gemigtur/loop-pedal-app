@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "loop-pedal-app",
+    "name": "Loop Pedal",
     "slug": "loop-pedal-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1c1c1c"
     },
     "ios": {
       "supportsTablet": true
@@ -18,12 +18,21 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1c1c1c"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": ["android.permission.RECORD_AUDIO"],
+      "package": "com.gemigtur.looppedalapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "platforms": ["ios", "android"],
+    "privacy": "public",
+    "extra": {
+      "eas": {
+        "projectId": "a0e0c7e6-1f53-42df-98a1-1d314cb72f59"
+      }
     }
   }
 }
