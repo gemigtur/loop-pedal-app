@@ -1,5 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
+import React from "react";
+import { TouchableOpacity, Text, StyleSheet, Dimensions } from "react-native";
 
 interface BigRecordButtonProps {
   isRecording: boolean;
@@ -9,7 +9,7 @@ interface BigRecordButtonProps {
   onCancelRecording: () => void;
 }
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export const BigRecordButton: React.FC<BigRecordButtonProps> = ({
   isRecording,
@@ -55,9 +55,9 @@ const styles = StyleSheet.create({
     width: width - 48, // Full width minus padding
     height: 80,
     borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -67,20 +67,20 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   recordButton: {
-    backgroundColor: '#4a90e2',
+    backgroundColor: "#4a90e2",
   },
   countdownButton: {
-    backgroundColor: '#ff9500',
+    backgroundColor: "#ff9500",
   },
   cancelButton: {
-    backgroundColor: '#ff4444',
+    backgroundColor: "#ff4444",
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    fontWeight: "700",
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },

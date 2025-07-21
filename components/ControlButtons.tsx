@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import React from "react";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 
 interface ControlButtonsProps {
   isRecording: boolean;
@@ -36,7 +36,12 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
           onPress={onStartLoop}
           disabled={!hasRecording || isPlaying || isRecording}
         >
-          <Text style={[styles.buttonText, (!hasRecording || isRecording) && styles.disabledText]}>
+          <Text
+            style={[
+              styles.buttonText,
+              (!hasRecording || isRecording) && styles.disabledText,
+            ]}
+          >
             ▶️ Play Loop
           </Text>
         </TouchableOpacity>
@@ -61,41 +66,41 @@ export const ControlButtons: React.FC<ControlButtonsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    width: "100%",
     gap: 20,
   },
   playbackControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 15,
   },
   button: {
-    backgroundColor: '#333333',
+    backgroundColor: "#333333",
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     minHeight: 50,
   },
   playButton: {
-    backgroundColor: '#2d5a2d',
+    backgroundColor: "#2d5a2d",
     flex: 1,
   },
   stopButton: {
-    backgroundColor: '#5a2d2d',
+    backgroundColor: "#5a2d2d",
     flex: 1,
   },
   disabledButton: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     opacity: 0.5,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   disabledText: {
-    color: '#666666',
+    color: "#666666",
   },
 });

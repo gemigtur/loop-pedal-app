@@ -1,13 +1,17 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet, Animated } from "react-native";
 
 interface TempoLightProps {
   bpm: number;
   isActive: boolean;
-  mode: 'recording' | 'playing' | 'idle';
+  mode: "recording" | "playing" | "idle";
 }
 
-export const TempoLight: React.FC<TempoLightProps> = ({ bpm, isActive, mode }) => {
+export const TempoLight: React.FC<TempoLightProps> = ({
+  bpm,
+  isActive,
+  mode,
+}) => {
   const fadeAnim = useRef(new Animated.Value(0.3)).current;
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -15,7 +19,7 @@ export const TempoLight: React.FC<TempoLightProps> = ({ bpm, isActive, mode }) =
     if (isActive && bpm > 0) {
       // Calculate the duration for one beat in milliseconds
       const beatDuration = (60 / bpm) * 1000;
-      
+
       const startBlinking = () => {
         // Create a pulse animation
         const pulse = () => {
@@ -35,7 +39,7 @@ export const TempoLight: React.FC<TempoLightProps> = ({ bpm, isActive, mode }) =
 
         // Start immediately
         pulse();
-        
+
         // Set interval for subsequent beats
         intervalRef.current = setInterval(pulse, beatDuration);
       };
@@ -47,7 +51,7 @@ export const TempoLight: React.FC<TempoLightProps> = ({ bpm, isActive, mode }) =
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      
+
       Animated.timing(fadeAnim, {
         toValue: 0.3,
         duration: 300,
@@ -65,12 +69,12 @@ export const TempoLight: React.FC<TempoLightProps> = ({ bpm, isActive, mode }) =
 
   const getLightColor = () => {
     switch (mode) {
-      case 'recording':
-        return '#ff4444'; // Red for recording
-      case 'playing':
-        return '#44ff44'; // Green for playing
+      case "recording":
+        return "#ff4444"; // Red for recording
+      case "playing":
+        return "#44ff44"; // Green for playing
       default:
-        return '#666666'; // Gray for idle
+        return "#666666"; // Gray for idle
     }
   };
 
@@ -92,8 +96,8 @@ export const TempoLight: React.FC<TempoLightProps> = ({ bpm, isActive, mode }) =
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     width: 60,
     height: 60,
     marginVertical: 20,
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    position: 'absolute',
+    position: "absolute",
   },
   lightRing: {
     width: 50,

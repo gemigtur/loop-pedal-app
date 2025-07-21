@@ -2,7 +2,14 @@ import React, { useState, useRef } from "react";
 import { StyleSheet, View, Text, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AudioManager, AudioRecording, AudioSound } from "./utils/audioUtils";
-import { TempoLight, ControlButtons, BPMInput, CountdownOverlay, BeatsSelector, BigRecordButton } from "./components";
+import {
+  TempoLight,
+  ControlButtons,
+  BPMInput,
+  CountdownOverlay,
+  BeatsSelector,
+  BigRecordButton,
+} from "./components";
 
 export default function App() {
   const [bpm, setBpm] = useState("120");
@@ -41,7 +48,7 @@ export default function App() {
   const onCountdownComplete = async () => {
     try {
       const numericBpm = parseInt(bpm);
-      
+
       // Start actual recording after countdown
       const recording = await AudioManager.createRecording();
       await recording.startAsync();
@@ -49,9 +56,14 @@ export default function App() {
       setIsRecording(true);
       setShowCountdown(false);
 
-      // Stop after x beats
-      const durationMs = (60 / numericBpm) * beats * 1000;
-      recordingTimeoutRef.current = setTimeout(() => stopRecording(), durationMs);
+      // Stop after x beats (add small buffer to ensure full duration)
+      const beatDurationMs = (60 / numericBpm) * 1000;
+      const durationMs = beatDurationMs * beats + 50; // Add 50ms buffer
+      console.log(`Recording for ${beats} beats at ${numericBpm} BPM = ${durationMs}ms`);
+      recordingTimeoutRef.current = setTimeout(
+        () => stopRecording(),
+        durationMs
+      );
     } catch (error) {
       console.error("Recording failed:", error);
       setShowCountdown(false);
@@ -95,7 +107,7 @@ export default function App() {
 
       await recording.stopAndUnloadAsync();
       recordingRef.current = null;
-      
+
       // Don't set recordingUri - this discards the recording
       console.log("Recording cancelled");
     } catch (error) {
@@ -126,9 +138,9 @@ export default function App() {
   };
 
   const getTempoLightMode = () => {
-    if (isRecording) return 'recording';
-    if (isPlaying) return 'playing';
-    return 'idle';
+    if (isRecording) return "recording";
+    if (isPlaying) return "playing";
+    return "idle";
   };
 
   return (
@@ -172,6 +184,7 @@ export default function App() {
       <CountdownOverlay
         isVisible={showCountdown}
         bpm={parseInt(bpm) || 120}
+        beats={beats}
         onCountdownComplete={onCountdownComplete}
       />
 
@@ -198,14 +211,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   bottomButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: 24,
     paddingBottom: 40,
     paddingTop: 20,
-    backgroundColor: 'rgba(28, 28, 28, 0.95)',
-    alignItems: 'center',
+    backgroundColor: "rgba(28, 28, 28, 0.95)",
+    alignItems: "center",
   },
 });
