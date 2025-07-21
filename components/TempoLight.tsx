@@ -80,7 +80,7 @@ export const TempoLight: React.FC<TempoLightProps> = ({
       }
 
       setCurrentBeat(1);
-      
+
       Animated.parallel([
         Animated.timing(scaleAnim, {
           toValue: 1,

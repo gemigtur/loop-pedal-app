@@ -59,7 +59,9 @@ export default function App() {
       // Stop after x beats (add small buffer to ensure full duration)
       const beatDurationMs = (60 / numericBpm) * 1000;
       const durationMs = beatDurationMs * beats + 50; // Add 50ms buffer
-      console.log(`Recording for ${beats} beats at ${numericBpm} BPM = ${durationMs}ms`);
+      console.log(
+        `Recording for ${beats} beats at ${numericBpm} BPM = ${durationMs}ms`
+      );
       recordingTimeoutRef.current = setTimeout(
         () => stopRecording(),
         durationMs
@@ -146,7 +148,11 @@ export default function App() {
   return (
     <View style={styles.container}>
       <View style={styles.topContent}>
-        <Text style={styles.header}>🎵 Loop Pedal</Text>
+        <View style={styles.titleContainer}>
+          {/* <Text style={styles.titleIcon}>⚡</Text> */}
+          <Text style={styles.title}>LOOP</Text>
+          <Text style={styles.titleAccent}>PEDAL</Text>
+        </View>
 
         <TempoLight
           bpm={parseInt(bpm) || 120}
@@ -205,6 +211,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
     paddingBottom: 120, // Space for the bottom button
+  },
+  titleContainer: {
+    alignItems: "center",
+    marginBottom: 30,
+    paddingVertical: 20,
+  },
+  titleIcon: {
+    fontSize: 48,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  title: {
+    color: "#ffffff",
+    fontSize: 42,
+    fontWeight: "900",
+    letterSpacing: 8,
+    textAlign: "center",
+    textShadowColor: "#4a90e2",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+    marginBottom: 5,
+  },
+  titleAccent: {
+    color: "#4a90e2",
+    fontSize: 42,
+    fontWeight: "900",
+    letterSpacing: 8,
+    textAlign: "center",
+    textShadowColor: "#41bcd1ff",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 5,
   },
   header: {
     color: "#fff",
