@@ -152,6 +152,7 @@ export default function App() {
           bpm={parseInt(bpm) || 120}
           isActive={isRecording || isPlaying}
           mode={getTempoLightMode()}
+          isCountdownVisible={showCountdown}
         />
 
         <BPMInput bpm={bpm} onBpmChange={setBpm} />
