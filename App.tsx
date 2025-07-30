@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
-import { StyleSheet, View, Text, Alert } from "react-native";
+import { StyleSheet, View, Text, Alert, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AudioManager, AudioRecording, AudioSound } from "./utils/audioUtils";
+import { LoopStorage, SavedLoop } from "./utils/loopStorage";
 import {
   TempoLight,
   ControlButtons,
@@ -9,6 +10,9 @@ import {
   CountdownOverlay,
   BeatsSelector,
   BigRecordButton,
+  SaveButton,
+  SaveDialog,
+  LoopsList,
 } from "./components";
 
 export default function App() {
@@ -19,6 +23,9 @@ export default function App() {
   const [sound, setSound] = useState<AudioSound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoopsList, setShowLoopsList] = useState(false);
+  const [currentLoopName, setCurrentLoopName] = useState<string | null>(null);
   const recordingRef = useRef<AudioRecording | null>(null);
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -87,6 +94,7 @@ export default function App() {
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       setRecordingUri(uri);
+      setCurrentLoopName(null); // Clear loop name for new recordings
       recordingRef.current = null;
 
       console.log("Recorded URI:", uri);
@@ -145,55 +153,176 @@ export default function App() {
     return "idle";
   };
 
+  const handleSaveLoop = async (title: string) => {
+    if (!recordingUri) {
+      Alert.alert("Error", "No recording to save");
+      return;
+    }
+
+    try {
+      await LoopStorage.saveLoop(title, bpm, beats, recordingUri);
+      setShowSaveDialog(false);
+      Alert.alert("Success", "Loop saved successfully!");
+    } catch (error) {
+      console.error("Error saving loop:", error);
+      Alert.alert("Error", "Failed to save loop");
+    }
+  };
+
+  const handleLoadLoop = async (loop: SavedLoop) => {
+    try {
+      // Stop any current playback
+      if (sound) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+        setSound(null);
+        setIsPlaying(false);
+      }
+
+      // Load the saved loop
+      setBpm(loop.bpm);
+      setBeats(loop.beats);
+      setRecordingUri(loop.filePath);
+      setCurrentLoopName(loop.title);
+
+      Alert.alert("Loop Loaded", `"${loop.title}" is ready to play!`);
+    } catch (error) {
+      console.error("Error loading loop:", error);
+      Alert.alert("Error", "Failed to load loop");
+    }
+  };
+
+  const handleDeleteLoop = async (deletedLoop: SavedLoop) => {
+    // If the currently loaded recording is the one being deleted, clear it
+    if (recordingUri === deletedLoop.filePath) {
+      // Stop any current playback first
+      if (sound) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+        setSound(null);
+        setIsPlaying(false);
+      }
+
+      // Clear the recording
+      setRecordingUri(null);
+      setCurrentLoopName(null);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.topContent}>
-        <View style={styles.titleContainer}>
-          {/* <Text style={styles.titleIcon}>⚡</Text> */}
-          <Text style={styles.title}>LOOP</Text>
-          <Text style={styles.titleAccent}>PEDAL</Text>
-        </View>
-
-        <TempoLight
-          bpm={parseInt(bpm) || 120}
-          isActive={isRecording || isPlaying}
-          mode={getTempoLightMode()}
-          isCountdownVisible={showCountdown}
+      {showLoopsList ? (
+        <LoopsList
+          onClose={() => setShowLoopsList(false)}
+          onLoadLoop={handleLoadLoop}
+          onDeleteLoop={handleDeleteLoop}
         />
+      ) : (
+        <>
+          <View style={styles.topContent}>
+            <View style={styles.titleContainer}>
+              {/* <Text style={styles.titleIcon}>⚡</Text> */}
+              <Text style={styles.title}>LOOP</Text>
+              <Text style={styles.titleAccent}>PEDAL</Text>
+            </View>
 
-        <BPMInput bpm={bpm} onBpmChange={setBpm} />
+            {/* Current Loop Display - Always present to maintain consistent spacing */}
+            <View style={styles.currentLoopContainer}>
+              {currentLoopName ? (
+                <>
+                  <Text style={styles.currentLoopLabel}>Now Playing:</Text>
+                  <Text style={styles.currentLoopName}>{currentLoopName}</Text>
+                </>
+              ) : recordingUri ? (
+                <>
+                  <Text style={styles.currentLoopLabel}>Unsaved Loop</Text>
+                  <Text style={styles.currentLoopUnsaved}>
+                    Ready to save or play
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.currentLoopLabel}>Ready</Text>
+                  <Text style={styles.currentLoopEmpty}>
+                    Tap record to start
+                  </Text>
+                </>
+              )}
+            </View>
 
-        <BeatsSelector beats={beats} onBeatsChange={setBeats} />
+            <TempoLight
+              bpm={parseInt(bpm) || 120}
+              isActive={isRecording || isPlaying}
+              mode={getTempoLightMode()}
+              isCountdownVisible={showCountdown}
+            />
 
-        <ControlButtons
-          isRecording={isRecording}
-          hasRecording={!!recordingUri}
-          isPlaying={isPlaying}
-          onStartRecording={startRecording}
-          onStartLoop={startLoop}
-          onStopLoop={stopLoop}
-          onCancelRecording={cancelRecording}
-          isCountingDown={showCountdown}
-          beats={beats}
-        />
-      </View>
+            <BPMInput bpm={bpm} onBpmChange={setBpm} />
 
-      <View style={styles.bottomButton}>
-        <BigRecordButton
-          isRecording={isRecording}
-          isCountingDown={showCountdown}
-          beats={beats}
-          onStartRecording={startRecording}
-          onCancelRecording={cancelRecording}
-        />
-      </View>
+            <BeatsSelector beats={beats} onBeatsChange={setBeats} />
 
-      <CountdownOverlay
-        isVisible={showCountdown}
-        bpm={parseInt(bpm) || 120}
-        beats={beats}
-        onCountdownComplete={onCountdownComplete}
-      />
+            <ControlButtons
+              isRecording={isRecording}
+              hasRecording={!!recordingUri}
+              isPlaying={isPlaying}
+              onStartRecording={startRecording}
+              onStartLoop={startLoop}
+              onStopLoop={stopLoop}
+              onCancelRecording={cancelRecording}
+              isCountingDown={showCountdown}
+              beats={beats}
+            />
+          </View>
+
+          {/* Save Button */}
+          <SaveButton
+            onPress={() => setShowSaveDialog(true)}
+            hasRecording={!!recordingUri}
+          />
+
+          {/* Loops Button */}
+          <TouchableOpacity
+            style={styles.loopsButton}
+            onPress={async () => {
+              // Stop any current playback before opening loops list
+              if (sound) {
+                await sound.stopAsync();
+                await sound.unloadAsync();
+                setSound(null);
+                setIsPlaying(false);
+              }
+              setShowLoopsList(true);
+            }}
+          >
+            <Text style={styles.loopsButtonText}>📁 Loops</Text>
+          </TouchableOpacity>
+
+          <View style={styles.bottomButton}>
+            <BigRecordButton
+              isRecording={isRecording}
+              isCountingDown={showCountdown}
+              beats={beats}
+              onStartRecording={startRecording}
+              onCancelRecording={cancelRecording}
+            />
+          </View>
+
+          <CountdownOverlay
+            isVisible={showCountdown}
+            bpm={parseInt(bpm) || 120}
+            beats={beats}
+            onCountdownComplete={onCountdownComplete}
+          />
+
+          <SaveDialog
+            isVisible={showSaveDialog}
+            onSave={handleSaveLoop}
+            onCancel={() => setShowSaveDialog(false)}
+            bpm={bpm}
+            beats={beats}
+          />
+        </>
+      )}
 
       <StatusBar style="auto" />
     </View>
@@ -243,10 +372,74 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 5,
   },
+  currentLoopContainer: {
+    alignItems: "center",
+    marginBottom: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "rgba(74, 144, 226, 0.05)",
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: "rgba(74, 144, 226, 0.2)",
+    minHeight: 36, // Fixed height to prevent layout shifts
+  },
+  currentLoopLabel: {
+    color: "#808080",
+    fontSize: 10,
+    fontWeight: "400",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  currentLoopName: {
+    color: "#4a90e2",
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  currentLoopUnsaved: {
+    color: "#ffa500",
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  currentLoopEmpty: {
+    color: "#666666",
+    fontSize: 14,
+    fontWeight: "400",
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+  currentLoopPlaceholder: {
+    fontSize: 14,
+    height: 18, // Maintain height when empty
+  },
   header: {
     color: "#fff",
     fontSize: 24,
     marginBottom: 20,
+  },
+  loopsButton: {
+    position: "absolute",
+    top: 50,
+    left: 24,
+    backgroundColor: "#4a90e2",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  loopsButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
   },
   bottomButton: {
     position: "absolute",

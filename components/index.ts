@@ -4,3 +4,6 @@ export { BPMInput } from "./BPMInput";
 export { CountdownOverlay } from "./CountdownOverlay";
 export { BeatsSelector } from "./BeatsSelector";
 export { BigRecordButton } from "./BigRecordButton";
+export { SaveButton } from "./SaveButton";
+export { SaveDialog } from "./SaveDialog";
+export { LoopsList } from "./LoopsList";
