@@ -1,6 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { StyleSheet, View, Text, Alert, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { useKeepAwake } from "expo-keep-awake";
 import { AudioManager, AudioRecording, AudioSound } from "./utils/audioUtils";
 import { LoopStorage, SavedLoop } from "./utils/loopStorage";
 import {
@@ -28,6 +29,9 @@ export default function App() {
   const [currentLoopName, setCurrentLoopName] = useState<string | null>(null);
   const recordingRef = useRef<AudioRecording | null>(null);
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Keep screen awake when playing loops
+  useKeepAwake(isPlaying ? "playing-loop" : undefined);
 
   const startRecording = async () => {
     try {
