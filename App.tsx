@@ -1,5 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { StyleSheet, View, Text, Alert, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  Alert,
+  TouchableOpacity,
+  Modal,
+  Animated,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useKeepAwake } from "expo-keep-awake";
 import { AudioManager, AudioRecording, AudioSound } from "./utils/audioUtils";
@@ -14,6 +22,7 @@ import {
   SaveButton,
   SaveDialog,
   LoopsList,
+  SoundwaveVisualizer,
 } from "./components";
 
 export default function App() {
@@ -27,6 +36,8 @@ export default function App() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoopsList, setShowLoopsList] = useState(false);
   const [currentLoopName, setCurrentLoopName] = useState<string | null>(null);
+  const [showLoadedToast, setShowLoadedToast] = useState(false);
+  const [loadedLoopTitle, setLoadedLoopTitle] = useState("");
   const recordingRef = useRef<AudioRecording | null>(null);
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -157,19 +168,19 @@ export default function App() {
     return "idle";
   };
 
-  const handleSaveLoop = async (title: string) => {
+  const handleSaveLoop = async (
+    title: string
+  ): Promise<{ success: boolean; error?: string }> => {
     if (!recordingUri) {
-      Alert.alert("Error", "No recording to save");
-      return;
+      return { success: false, error: "No recording to save" };
     }
 
     try {
       await LoopStorage.saveLoop(title, bpm, beats, recordingUri);
-      setShowSaveDialog(false);
-      Alert.alert("Success", "Loop saved successfully!");
+      return { success: true };
     } catch (error) {
       console.error("Error saving loop:", error);
-      Alert.alert("Error", "Failed to save loop");
+      return { success: false, error: "Failed to save loop" };
     }
   };
 
@@ -189,7 +200,14 @@ export default function App() {
       setRecordingUri(loop.filePath);
       setCurrentLoopName(loop.title);
 
-      Alert.alert("Loop Loaded", `"${loop.title}" is ready to play!`);
+      // Show toast notification
+      setLoadedLoopTitle(loop.title);
+      setShowLoadedToast(true);
+
+      // Auto hide after 1.5 seconds
+      setTimeout(() => {
+        setShowLoadedToast(false);
+      }, 1500);
     } catch (error) {
       console.error("Error loading loop:", error);
       Alert.alert("Error", "Failed to load loop");
@@ -225,9 +243,12 @@ export default function App() {
         <>
           <View style={styles.topContent}>
             <View style={styles.titleContainer}>
-              {/* <Text style={styles.titleIcon}>⚡</Text> */}
-              <Text style={styles.title}>LOOP</Text>
-              <Text style={styles.titleAccent}>PEDAL</Text>
+              <View style={styles.titleWrapper}>
+                <View style={styles.titleGlow} />
+                <Text style={styles.title}>LOOP</Text>
+                <Text style={styles.titleAccent}>PEDAL</Text>
+              </View>
+              <SoundwaveVisualizer isPlaying={isPlaying} bpm={bpm} />
             </View>
 
             {/* Current Loop Display - Always present to maintain consistent spacing */}
@@ -325,6 +346,24 @@ export default function App() {
             bpm={bpm}
             beats={beats}
           />
+
+          {/* Loop Loaded Toast */}
+          <Modal
+            visible={showLoadedToast}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowLoadedToast(false)}
+          >
+            <View style={styles.toastOverlay}>
+              <View style={styles.toast}>
+                <Text style={styles.toastIcon}>🎵</Text>
+                <Text style={styles.toastTitle}>Loop Loaded!</Text>
+                <Text style={styles.toastMessage}>
+                  "{loadedLoopTitle}" is ready to play
+                </Text>
+              </View>
+            </View>
+          </Modal>
         </>
       )}
 
@@ -350,31 +389,49 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     paddingVertical: 20,
   },
-  titleIcon: {
-    fontSize: 48,
-    marginBottom: 10,
-    textAlign: "center",
+  titleWrapper: {
+    position: "relative",
+    alignItems: "center",
   },
   title: {
     color: "#ffffff",
-    fontSize: 42,
+    fontSize: 44,
     fontWeight: "900",
-    letterSpacing: 8,
+    letterSpacing: 10,
     textAlign: "center",
-    textShadowColor: "#4a90e2",
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
-    marginBottom: 5,
+    marginBottom: 2,
   },
   titleAccent: {
     color: "#4a90e2",
-    fontSize: 42,
+    fontSize: 44,
     fontWeight: "900",
-    letterSpacing: 8,
+    letterSpacing: 10,
     textAlign: "center",
-    textShadowColor: "#41bcd1ff",
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 5,
+  },
+  titleGlow: {
+    position: "absolute",
+    top: -15,
+    left: -40,
+    right: -40,
+    bottom: -15,
+    backgroundColor: "rgba(74, 144, 226, 0.08)",
+    borderRadius: 20,
+    zIndex: -1,
+  },
+  titleUnderline: {
+    width: 140,
+    height: 4,
+    backgroundColor: "#4a90e2",
+    marginTop: 15,
+    borderRadius: 2,
+    shadowColor: "#4a90e2",
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
   },
   currentLoopContainer: {
     alignItems: "center",
@@ -455,5 +512,42 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     backgroundColor: "rgba(28, 28, 28, 0.95)",
     alignItems: "center",
+  },
+  toastOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  toast: {
+    backgroundColor: "#2c2c2c",
+    borderRadius: 16,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  toastIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  toastTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#4CAF50",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  toastMessage: {
+    fontSize: 14,
+    color: "#ffffff",
+    textAlign: "center",
   },
 });

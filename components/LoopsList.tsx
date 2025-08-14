@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   TextInput,
   Modal,
 } from "react-native";
@@ -25,6 +24,7 @@ export const LoopsList: React.FC<LoopsListProps> = ({
   const [loops, setLoops] = useState<SavedLoop[]>([]);
   const [editingLoop, setEditingLoop] = useState<SavedLoop | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [deletingLoop, setDeletingLoop] = useState<SavedLoop | null>(null);
 
   useEffect(() => {
     loadLoops();
@@ -39,22 +39,16 @@ export const LoopsList: React.FC<LoopsListProps> = ({
   };
 
   const handleDeleteLoop = (loop: SavedLoop) => {
-    Alert.alert(
-      "Delete Loop",
-      `Are you sure you want to delete "${loop.title}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            await LoopStorage.deleteLoop(loop.id);
-            onDeleteLoop?.(loop); // Notify parent about deletion
-            loadLoops();
-          },
-        },
-      ]
-    );
+    setDeletingLoop(loop);
+  };
+
+  const confirmDeleteLoop = async () => {
+    if (deletingLoop) {
+      await LoopStorage.deleteLoop(deletingLoop.id);
+      onDeleteLoop?.(deletingLoop); // Notify parent about deletion
+      setDeletingLoop(null);
+      loadLoops();
+    }
   };
 
   const handleEditLoop = (loop: SavedLoop) => {
@@ -182,6 +176,42 @@ export const LoopsList: React.FC<LoopsListProps> = ({
                 onPress={handleSaveEdit}
               >
                 <Text style={styles.editSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={deletingLoop !== null}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.deleteDialog}>
+            <Text style={styles.deleteTitle}>Delete Loop</Text>
+
+            <Text style={styles.deleteMessage}>
+              Are you sure you want to delete "{deletingLoop?.title}"?
+            </Text>
+            <Text style={styles.deleteSubMessage}>
+              This action cannot be undone.
+            </Text>
+
+            <View style={styles.deleteButtons}>
+              <TouchableOpacity
+                style={styles.deleteCancelButton}
+                onPress={() => setDeletingLoop(null)}
+              >
+                <Text style={styles.deleteCancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteConfirmButton}
+                onPress={confirmDeleteLoop}
+              >
+                <Text style={styles.deleteConfirmText}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -351,6 +381,62 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   editSaveText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  deleteDialog: {
+    backgroundColor: "#2c2c2c",
+    borderRadius: 20,
+    padding: 30,
+    width: "100%",
+    maxWidth: 400,
+  },
+  deleteTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#ff4444",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  deleteMessage: {
+    fontSize: 16,
+    color: "#ffffff",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  deleteSubMessage: {
+    fontSize: 14,
+    color: "#888888",
+    textAlign: "center",
+    marginBottom: 25,
+  },
+  deleteButtons: {
+    flexDirection: "row",
+    gap: 15,
+  },
+  deleteCancelButton: {
+    flex: 1,
+    height: 45,
+    backgroundColor: "#666666",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteConfirmButton: {
+    flex: 1,
+    height: 45,
+    backgroundColor: "#ff4444",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteCancelText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  deleteConfirmText: {
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",

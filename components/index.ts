@@ -7,3 +7,4 @@ export { BigRecordButton } from "./BigRecordButton";
 export { SaveButton } from "./SaveButton";
 export { SaveDialog } from "./SaveDialog";
 export { LoopsList } from "./LoopsList";
+export { SoundwaveVisualizer } from "./SoundwaveVisualizer";
